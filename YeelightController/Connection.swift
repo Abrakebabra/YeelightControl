@@ -20,8 +20,9 @@ public class Connection {
     public var remoteHost: NWEndpoint.Host?
     public var remotePort: NWEndpoint.Port?
     
-    // dispatch
-    private let serialQueue: DispatchQueue
+    // dispatch management
+    internal let serialQueue: DispatchQueue
+    internal let dispatchGroup = DispatchGroup()
     
     // Connection
     public var conn: NWConnection

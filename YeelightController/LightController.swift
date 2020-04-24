@@ -145,7 +145,7 @@ fileprivate class UDPConnection: Connection {
         // pass data to the closure, cancel the listener and signal that the calling function can progress with the data
         closure(dataArray)
         listener.cancel()
-        self.dispatchGroup.leave() // unlock 2
+        self.dispatchGroup.leave() // unlock 2 (entered in self.sendSearchMessage)
     } // UDPConnection.listener()
     
     

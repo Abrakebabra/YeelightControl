@@ -300,7 +300,7 @@ public class Light {
     
     
     
-    private init(_ id: String, _ ip: String, _ port: String,
+    internal init(_ id: String, _ ip: String, _ port: String,
          _ power: String, _ colorMode: String, _ brightness: String,
          _ colorTemp: String, _ rgb: String, _ hue: String, _ sat: String,
          _ name: String, _ model: String, _ support: String) throws {
