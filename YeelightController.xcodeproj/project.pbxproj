@@ -9,12 +9,22 @@
 /* Begin PBXBuildFile section */
 		64FA0DB92451EF5B009A46B9 /* YeelightController.h in Headers */ = {isa = PBXBuildFile; fileRef = 64FA0DB82451EF5B009A46B9 /* YeelightController.h */; };
 		64FA0DBB2451EF5B009A46B9 /* YeelightController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64FA0DBA2451EF5B009A46B9 /* YeelightController.m */; };
+		64FA0DC22451EF6C009A46B9 /* LightController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64FA0DC12451EF6C009A46B9 /* LightController.swift */; };
+		64FA0DC42451EF77009A46B9 /* Light.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64FA0DC32451EF77009A46B9 /* Light.swift */; };
+		64FA0DC82451EF8F009A46B9 /* LightCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64FA0DC72451EF8F009A46B9 /* LightCommand.swift */; };
+		64FA0DCA2451EF9B009A46B9 /* Connection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64FA0DC92451EF9B009A46B9 /* Connection.swift */; };
+		64FA0DCC2451EFA6009A46B9 /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64FA0DCB2451EFA6009A46B9 /* Errors.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		64FA0DB52451EF5B009A46B9 /* libYeelightController.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libYeelightController.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		64FA0DB82451EF5B009A46B9 /* YeelightController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YeelightController.h; sourceTree = "<group>"; };
 		64FA0DBA2451EF5B009A46B9 /* YeelightController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = YeelightController.m; sourceTree = "<group>"; };
+		64FA0DC12451EF6C009A46B9 /* LightController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightController.swift; sourceTree = "<group>"; };
+		64FA0DC32451EF77009A46B9 /* Light.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Light.swift; sourceTree = "<group>"; };
+		64FA0DC72451EF8F009A46B9 /* LightCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightCommand.swift; sourceTree = "<group>"; };
+		64FA0DC92451EF9B009A46B9 /* Connection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connection.swift; sourceTree = "<group>"; };
+		64FA0DCB2451EFA6009A46B9 /* Errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Errors.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -49,6 +59,11 @@
 			children = (
 				64FA0DB82451EF5B009A46B9 /* YeelightController.h */,
 				64FA0DBA2451EF5B009A46B9 /* YeelightController.m */,
+				64FA0DC12451EF6C009A46B9 /* LightController.swift */,
+				64FA0DC32451EF77009A46B9 /* Light.swift */,
+				64FA0DC72451EF8F009A46B9 /* LightCommand.swift */,
+				64FA0DC92451EF9B009A46B9 /* Connection.swift */,
+				64FA0DCB2451EFA6009A46B9 /* Errors.swift */,
 			);
 			path = YeelightController;
 			sourceTree = "<group>";
@@ -95,6 +110,7 @@
 				TargetAttributes = {
 					64FA0DB42451EF5B009A46B9 = {
 						CreatedOnToolsVersion = 10.3;
+						LastSwiftMigration = 1030;
 					};
 				};
 			};
@@ -120,7 +136,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				64FA0DC82451EF8F009A46B9 /* LightCommand.swift in Sources */,
+				64FA0DC42451EF77009A46B9 /* Light.swift in Sources */,
+				64FA0DCA2451EF9B009A46B9 /* Connection.swift in Sources */,
 				64FA0DBB2451EF5B009A46B9 /* YeelightController.m in Sources */,
+				64FA0DCC2451EFA6009A46B9 /* Errors.swift in Sources */,
+				64FA0DC22451EF6C009A46B9 /* LightController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -241,22 +262,37 @@
 		64FA0DBF2451EF5B009A46B9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = UK6M8ZDXSG;
 				EXECUTABLE_PREFIX = lib;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
 		64FA0DC02451EF5B009A46B9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = UK6M8ZDXSG;
 				EXECUTABLE_PREFIX = lib;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
