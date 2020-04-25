@@ -9,9 +9,49 @@
 import Foundation
 import Network // for noLimitTCP listener
 
-// ==========================================================================
-// CONTENTS =================================================================
-// ==========================================================================
+
+// =============================================================================
+// SUMMARY =====================================================================
+// =============================================================================
+
+/*
+ 
+ Primary:       LightCommand  (a supporting class to class Light)
+ Supporting:    InputOptions
+ 
+ LightCommand is a structure designed to eliminate errors in commands sent to the light.  It ensures that all methods and parameters meet the light's protocol.
+ 
+ InputOptions railroads input options from String and Int into safe and understandable enumerations that handle the conversion into data types according to Yeelight's protocol.
+ 
+ 
+ Standard command:
+ do {
+    let message: String = try LightCommand.CommandType(parameters).string()
+    LightInstance.communicate(message)
+ }
+ catch {
+ 
+ }
+ 
+ flowStart command:
+ do {
+    let flowExpressions = LightCommand.flowStart.CreateExpressions()
+    flowExpressions.addState(parameters for n state)
+    flowExpressions.addState(parameters for n+1 state)
+    let message: String = try LightCommand.flowStart(parameters, flowExpressions).string()
+    LightInstance.communicate(message)
+ }
+ catch {
+ 
+ }
+ 
+ flowStop must be sent before the light will accept another command if it is in flow mode.
+ 
+ */
+
+// =============================================================================
+// CONTENTS ====================================================================
+// =============================================================================
 
 // Significant items listed
 
@@ -45,12 +85,12 @@ import Network // for noLimitTCP listener
 /// Railroads input options from String and Int into safe and understandable enumerations that handle the conversion into data types according to Yeelight's protocol.
 public enum InputOptions {
     
-    /// Gradual or instant change.
+    /// Gradual or sudden change.
     public enum Effect {
         case sudden
         case smooth
         
-        public func string() -> String {
+        fileprivate func string() -> String {
             switch self {
             case .sudden:
                 return "sudden"
@@ -97,7 +137,7 @@ public enum InputOptions {
         case stayCurrent
         case turnOff
         
-        public func int() -> Int {
+        fileprivate func int() -> Int {
             switch self {
                 
             /// return to previous setting.

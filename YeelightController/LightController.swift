@@ -10,9 +10,30 @@ import Foundation
 import Network
 
 
-// ==========================================================================
-// CONTENTS =================================================================
-// ==========================================================================
+
+// =============================================================================
+// SUMMARY =====================================================================
+// =============================================================================
+
+/*
+ 
+ Primary:       LightController
+ Supporting:    UDPConnection
+ 
+ LightController's purpose is to discover lights and store them.  The class can also rename them, pair the alias names with the light's IDs, and save them to an alias:Light pair.  If any connections fail and must be restarted, the lights can be re-discovered and the alias can be paired to the same light without the process needing to be re-performed.
+ 
+ The class has been designed to detect and save the lights as fast as possible, and also give the user flexibility to search for the lights based on knowing how many to look for, or finding them based on a timeout.
+ 
+ The lights are stored in a publicly accessible dictionary.  They are a reference type and can be copied to be used elsewhere.
+ 
+ UDPConnection's purpose is to send a search advertisement to the lights, record all of the data sent back to a listener and to create a light object with the connection and state information from the light.
+ */
+
+
+
+// =============================================================================
+// CONTENTS ====================================================================
+// =============================================================================
 
 // public enum DiscoveryWait
 
@@ -49,9 +70,9 @@ public enum DiscoveryWait {
 
 
 
-// ==========================================================================
-// CLASS UDPCONNECTION ======================================================
-// ==========================================================================
+// =============================================================================
+// CLASS UDPCONNECTION =========================================================
+// =============================================================================
 
 
 
@@ -194,9 +215,9 @@ fileprivate class UDPConnection: Connection {
 
 
 
-// ==========================================================================
-// CLASS LIGHTCONTROLLER ====================================================
-// ==========================================================================
+// =============================================================================
+// CLASS LIGHTCONTROLLER =======================================================
+// =============================================================================
 
 
 
@@ -358,9 +379,9 @@ public class LightController {
     
     
     
-    // =====================================================================
-    // LIGHTCONTROLLER FUNCTIONS ===========================================
-    // =====================================================================
+    // =========================================================================
+    // LIGHTCONTROLLER FUNCTIONS ===============================================
+    // =========================================================================
     
     
     /// Discover and save lights found.  Default option is timeout of 2 seconds.

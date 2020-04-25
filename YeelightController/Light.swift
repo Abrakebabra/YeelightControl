@@ -10,6 +10,28 @@ import Foundation
 import Network
 
 
+// =============================================================================
+// SUMMARY =====================================================================
+// =============================================================================
+
+/*
+ 
+ Primary:       Light
+ Supporting:    State
+ Supporting:    Info
+ 
+ Light is an object that holds all the information about the light, connections, the current state, and the functions to parse and automatically handle data received from the light.  The light also handles any automated actions such as auto-cancelling and deinitialising the limitlessTCP connection object.
+ 
+ Light.communicate() is its only user-called function and automatically detects which TCP connection it should use.
+ 
+ 
+ State is not user set and is only updated from the light.  Data returned from the light with unsafe data types (such as a String with "on" and "off" for power, or 1 and 0 for mode on/off) are converted into safe data types (Bool).
+ 
+ Info holds identifying and useful information about the light that is not actively updated.
+ 
+ */
+
+
 // ==========================================================================
 // CONTENTS =================================================================
 // ==========================================================================
@@ -382,7 +404,7 @@ public class Light {
         {\(id), \(methodParams)}\r\n
         """
         
-        // print(message)  // FOR FUTURE DEBUGGING PURPOSES
+        // print(message)  // FOR DEBUGGING PURPOSES
         
         let requestContent = message.data(using: .utf8)
         

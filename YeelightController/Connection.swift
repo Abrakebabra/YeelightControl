@@ -10,6 +10,22 @@ import Foundation
 import Network
 
 
+// =============================================================================
+// SUMMARY =====================================================================
+// =============================================================================
+
+/*
+ 
+ Connection has two initialisers.  One for creating a new Connection instance from a remote IP and port, and one for creating a new Connection instance from an already established connection.
+ 
+ statusReady, statusCancelled and statusFailed are all called each time the status handler updates the status.  This is used to perform any actions when the connection is at that state.
+ 
+ If any errors result from trying to receive a message, the auto-receive recursion will discontinue.
+ 
+ */
+
+
+
 /// Handles the connection
 public class Connection {
     // local addr, port
