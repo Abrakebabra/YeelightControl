@@ -44,6 +44,7 @@ import Network
 // private class Light.updateState
 // private class Light.jsonDecodeAndHandle
 // public class Light.communicate
+// public class Light.printCommunications
 
 
 // ==========================================================================
@@ -65,7 +66,7 @@ public struct State {
     public var flowing: Bool?  // flowing or not
     public var flowParams: [Int]?  // tuple (4 integers) per state
     fileprivate var limitlessTCPModeOffNotify: (() -> Void)? // allows light to perform action if limitlessTCPMode is set to false
-    public var limitlessTCPMode: Bool? = false {
+    public var limitlessTCPMode: Bool = false {
         didSet {
             if limitlessTCPMode == false {
                 limitlessTCPModeOffNotify?()
@@ -154,6 +155,8 @@ public class Light {
     public var info: Info
     /// Number of messages sent to this light.
     public var requestTicket: Int = 0
+    // Print communication received from light.  False by default.
+    private var printCommunication: Bool = false
     private let deinitControl = DispatchGroup()
     
     
@@ -216,9 +219,21 @@ public class Light {
             self.state.flowing = flow == 1 ? true : false
             
         case "flow_params":
-            guard let params = value as? [Int] else {
-                throw LightStateUpdateError.value("flow params to Array failed")
+            guard let string: String = value as? String else {
+                throw LightStateUpdateError.value("flow params to String failed")
             }
+            
+            let stringNoSpace: String = string.replacingOccurrences(of: " ", with: "")
+            let stringComponents: [String] = stringNoSpace.components(separatedBy: ",")
+            var params: [Int] = []
+            
+            for i in stringComponents {
+                guard let intComponent = Int(i) else {
+                    throw LightStateUpdateError.value("flow param component to Int failed")
+                }
+                params.append(intComponent)
+            }
+            
             self.state.flowParams = params
             
         case "music_on":
@@ -250,6 +265,10 @@ public class Light {
          get_pro Response
          {"id":1, "result":["on", "", "100"]}
          
+         State Update Response
+         Sent to all tcp connections when state changed:
+         {"method":"props","params":{"ct":6500}}
+         
          Error Response
          {"id":2, "error":{"code":-1, “message”:"unsupported method"}}
          [String:[String:Any]]
@@ -260,8 +279,6 @@ public class Light {
          Won't use this response.
          cron methods can only turn off light after X minutes.  No need for a timer function.
          
-         Sent to all tcp connections when state changed:
-         {"method":"props","params":{"ct":6500}}
          */
         
         /*
@@ -283,11 +300,14 @@ public class Light {
         
         // results
         if let resultList = topLevel["result"] as? [String] {
-            if let id = topLevel["id"] as? Int {
-                // if there is a resultList
-                print("id \(id): \(resultList)")
-            } else {
-                print("No id: \(resultList)")
+            
+            if self.printCommunication == true {
+                if let id = topLevel["id"] as? Int {
+                    // if there is a resultList
+                    print("id \(id): \(resultList)")
+                } else {
+                    print("No id: \(resultList)")
+                }
             }
             
             // errors
@@ -311,7 +331,11 @@ public class Light {
             for (key, value) in changedState {
                 // switch function for updating state
                 try self.updateState(key, value)
-                print("\(self.info.id) updating '\(key)' to '\(value)'") // DEBUG
+                
+                if self.printCommunication == true {
+                    print("\(self.info.id) updating '\(key)' to '\(value)'")
+                }
+                
             }
             
         } else {
@@ -365,7 +389,7 @@ public class Light {
                 self.limitlessTCP = nil
             }
             self.limitlessTCP = nil
-            print("limitless TCP mode connection cancelled")
+            // print("limitless TCP mode connection cancelled") // do I want this?
         }
         
         self.limitlessTCP?.statusFailed = {
@@ -374,7 +398,7 @@ public class Light {
                 self.limitlessTCP = nil
             }
             self.limitlessTCP = nil
-            print("failed limitless TCP mode connection cancelled")
+            // print("failed limitless TCP mode connection cancelled") // do I want this?
         }
         
     } // Light.init()
@@ -404,39 +428,52 @@ public class Light {
         {\(id), \(methodParams)}\r\n
         """
         
-        // print(message)  // FOR DEBUGGING PURPOSES
-        
         let requestContent = message.data(using: .utf8)
         
         var tcpConnection = self.tcp.conn
         
         // if limitless TCP mode has been established, all TCP commands are sent to the new connection without limit
-        if let limitlessTCPModeState = self.state.limitlessTCPMode, let limitlessTCPConn = self.limitlessTCP?.conn {
-            if limitlessTCPModeState == true {
+        if self.state.limitlessTCPMode == true {
+            if let limitlessTCPConn = self.limitlessTCP?.conn {
                 tcpConnection = limitlessTCPConn
-                print("limitless TCP connection used")
             }
         }
         
+        // is this necessary?  TEST THIS
         if message == """
             {"id":1,"method":"set_music","params":[0]}
             """ {
                 tcpConnection = self.tcp.conn
         }
         
-        
-        if let unwrappedEndpoint = tcpConnection.currentPath?.remoteEndpoint {
-            switch unwrappedEndpoint {
-            case .hostPort(let host, let port):
-                print("Sent to host: \(host) and port: \(port)")
-            default:
-                return
-            }
-        }
-        
+
         tcpConnection.send(content: requestContent, completion: self.tcp.sendCompletion)
         
+        
+        if self.printCommunication == true {
+            
+            if self.state.limitlessTCPMode == true {
+                print("limitless TCP connection used")
+            }
+            
+            if let unwrappedEndpoint = tcpConnection.currentPath?.remoteEndpoint {
+                switch unwrappedEndpoint {
+                case .hostPort(let host, let port):
+                    print("Sent to host: \(host) and port: \(port)\n\(message)")
+                default:
+                    return
+                }
+            }
+        }
     } // Light.communicate()
+    
+    
+    /// Print communication received from light.  False by default.
+    public func printCommunications(_ setting: Bool) {
+        self.printCommunication = setting
+    }
+    
+    
     
 } // class Light
 

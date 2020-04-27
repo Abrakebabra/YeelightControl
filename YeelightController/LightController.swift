@@ -95,7 +95,7 @@ fileprivate class UDPConnection: Connection {
     
     
     // Listen for reply from multicast
-    fileprivate func listener(on port: NWEndpoint.Port, wait mode: DiscoveryWait, closure: @escaping ([Data]) -> Void) {
+    fileprivate func listener(on port: NWEndpoint.Port, wait mode: DiscoveryWait, _ closure: @escaping ([Data]) -> Void) {
         
         let listenerGroup = DispatchGroup()
         var waitCount: Int = 0 // default lightCount
@@ -201,9 +201,10 @@ fileprivate class UDPConnection: Connection {
         
         self.dispatchGroup.enter() // lock 2
         // Listen for light replies and create a new light tcp connection
-        self.listener(on: localHostPort.1, wait: mode, closure: { (dataArray) in
+        self.listener(on: localHostPort.1, wait: mode) {
+            (dataArray) in
             closure(dataArray)
-        })
+        }
         
         // wait for UDPConnection.listener() to collect data
         self.dispatchGroup.wait() // wait lock 2 - unlock in listener() - also with timeout

@@ -18,6 +18,8 @@ import Network // for noLimitTCP listener
  
  Primary:       LightCommand  (a supporting class to class Light)
  Supporting:    InputOptions
+ Supporting:    ColorConverter
+ 
  
  LightCommand is a structure designed to eliminate errors in commands sent to the light.  It ensures that all methods and parameters meet the light's protocol.
  
@@ -61,6 +63,10 @@ import Network // for noLimitTCP listener
 // public enum InputOptions.NumOfStateChanges
 // public enum InputOptions.OnCompletion
 // public enum InputOptions.SetState
+
+// public class ColorConverter
+// public class ColorConverter.rgbIntToTuple
+// public class ColorConverter.rgbTupleToInt
 
 // public struct LightCommand
 // private struct LightCommand.methodParamString
@@ -187,6 +193,26 @@ public enum InputOptions {
     } // InputOptions.SetState
 } // enum InputOptions
 
+
+
+/// Converters for different methods of storing color value
+public class ColorConverter {
+    public func rgbIntToTuple(rgb: Int) -> (Int, Int, Int) {
+        let gBitMask: Int = 0b000000001111111100000000
+        let bBitMask: Int = 0b000000000000000011111111
+        
+        return (rgb >> 16,
+                (rgb & gBitMask) >> 8,
+                rgb & bBitMask)
+    }
+    
+    public func rgbTupleToInt(r: Int, g: Int, b: Int) -> Int {
+        let rg = (r << 8) | g
+        let rgb = (rg << 8) | b
+        
+        return rgb
+    }
+}
 
 
 
@@ -689,11 +715,9 @@ public struct LightCommand {
             switch state {
             case .on:
                 
-                if let mode = self.targetLight.state.limitlessTCPMode {
-                    if mode == true {
-                        print("Already an existing limitless TCP connection")
-                        throw ConnectionError.connectionNotMade
-                    }
+                if self.targetLight.state.limitlessTCPMode == true {
+                    print("Already an existing limitless TCP connection")
+                    throw ConnectionError.connectionNotMade
                 }
                 
                 self.p1_action = 1
@@ -717,7 +741,6 @@ public struct LightCommand {
                             (port) in
                             // STEP 4:  The listener function has an escaping closure (listener port escaping) that will be called when the listener's status is ready.
                             self.p3_listenerPort = port
-                            print("listener port found")
                             self.controlGroup.leave() // control unlock
                         }
                     }
