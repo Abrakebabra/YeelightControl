@@ -124,10 +124,10 @@ public class Connection {
     
     // handles the receiving from tcp conn with light
     private func receiveRecursively() -> Void {
-        self.conn.receive(minimumIncompleteLength: 1, maximumLength: 65536) { (data, _, _, error) in
-            // Data?, NWConnection.ContentContext?, Bool, NWError?
-            
-            
+        /*
+         conn.receive(minimumIncompleteLength: 1, maximumLength: 65536) not used.  Sometimes two messages from the light received in quick succession are joined together into one message.  receiveMessage ends when the message is marked as complete.
+        */
+        self.conn.receiveMessage { (data, _, _, error) in
             if error != nil {
                 var host = "Unknown"
                 if let unwrappedHost = self.remoteHost {
@@ -139,7 +139,7 @@ public class Connection {
                 self.newData = data
                 self.receiveRecursively()
             }
-        } // conn.receive closure
+        }
     } // Connection.receiveRecursively()
     
     

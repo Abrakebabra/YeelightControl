@@ -154,6 +154,7 @@ public class Light {
     /// Identifying and useful information about light.
     public var info: Info
     /// Number of messages sent to this light.
+    public let requestTicketLightID: Int
     public var requestTicket: Int = 0
     // Print communication received from light.  False by default.
     private var printCommunication: Bool = false
@@ -295,7 +296,7 @@ public class Light {
         
         // unpack the top level json object
         guard let topLevel = json as? [String:Any] else {
-            throw JSONError.jsonObject
+            throw JSONError.jsonObject("jsonDecodeAndHandle: Not valid JSON object")
         }
         
         // results
@@ -317,7 +318,7 @@ public class Light {
                 let errorMessage: String = error["message"] as? String
                 else {
                     // if can't unpack error object
-                    throw JSONError.errorObject
+                    throw JSONError.errorObject("jsonDecodeAndHandle: Not valid JSON object")
             }
             
             if let id = topLevel["id"] as? Int {
@@ -367,6 +368,8 @@ public class Light {
         // Holds supporting information and identifier
         self.info = Info(id, name, model, support)
         
+        // able to diagnose whether requests from a single or multiple lights throw an error.
+        self.requestTicketLightID = Int.random(in: 1000..<9999)
         
         // handle new data received in closure from didSet var
         self.tcp.newDataReceived = { (data) in
@@ -376,7 +379,7 @@ public class Light {
                     try self.jsonDecodeAndHandle(data)
                 }
                 catch let error {
-                    print(error)
+                    print("JSON decode error: \(error)\nData Received: \(String(describing: String(bytes: data, encoding: .utf8)))")
                 }
             }
         }
@@ -420,8 +423,11 @@ public class Light {
         
         self.requestTicket += 1
         
+        let requestJoined: String = "\(String(self.requestTicketLightID))\(String(self.requestTicket))"
+        let requestInt: Int = Int(requestJoined)!
+        
         let id: String = """
-        "id":\(self.requestTicket)
+        "id":\(requestInt)
         """
         
         let message: String = """

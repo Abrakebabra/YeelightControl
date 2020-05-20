@@ -40,8 +40,8 @@ public enum RequestError: Error {
 
 
 public enum JSONError: Error {
-    case jsonObject
-    case errorObject
+    case jsonObject(String)
+    case errorObject(String)
     case response(String)
     case noData
     case unknown(Any?)

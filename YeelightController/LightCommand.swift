@@ -197,6 +197,11 @@ public enum InputOptions {
 
 /// Converters for different methods of storing color value
 public class ColorConverter {
+    
+    public init() {
+        return
+    }
+    
     public func rgbIntToTuple(rgb: Int) -> (Int, Int, Int) {
         let gBitMask: Int = 0b000000001111111100000000
         let bBitMask: Int = 0b000000000000000011111111
@@ -398,6 +403,10 @@ public struct LightCommand {
         /// create a saved array holding all added states.  addState() subsequently to append to array. This object is passed directly as a parameter to set_colorFlow.init()
         public struct CreateExpressions {
             private var allExpressions: [Int] = []
+            
+            public init() {
+                return
+            }
             
             /// append a new flow state to the CreateExpressions array.  rgb range: 1-16777215, color_temp range: 1700-6500, hue range: 0-359, sat range: 0-100, brightness range: 1-100, duration min = 30ms (as default)
             public mutating func addState(expression: InputOptions.SetState) throws {
