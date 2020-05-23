@@ -166,62 +166,62 @@ public class Light {
         switch key {
         case "power":
             guard let power = value as? String else {
-                throw LightStateUpdateError.value("power to String failed")
+                throw LightStateUpdateError.valueToDataTypeFailed("power to String failed")
             }
             
             self.state.power = power == "on" ? true : false
             
         case "bright":
             guard let brightness = value as? Int else {
-                throw LightStateUpdateError.value("brightness to Int failed")
+                throw LightStateUpdateError.valueToDataTypeFailed("brightness to Int failed")
             }
             self.state.brightness = brightness
             
         case "color_mode":
             guard let colorMode = value as? Int else {
-                throw LightStateUpdateError.value("colorTemp to Int failed")
+                throw LightStateUpdateError.valueToDataTypeFailed("colorTemp to Int failed")
             }
             self.state.colorMode = colorMode
             
         case "ct":
             guard let colorTemp = value as? Int else {
-                throw LightStateUpdateError.value("colorTemp to Int failed")
+                throw LightStateUpdateError.valueToDataTypeFailed("colorTemp to Int failed")
             }
             self.state.colorTemp = colorTemp
             
         case "rgb":
             guard let rgb = value as? Int else {
-                throw LightStateUpdateError.value("rgb to Int failed")
+                throw LightStateUpdateError.valueToDataTypeFailed("rgb to Int failed")
             }
             self.state.rgb = rgb
             
         case "hue":
             guard let hue = value as? Int else {
-                throw LightStateUpdateError.value("hue to Int failed")
+                throw LightStateUpdateError.valueToDataTypeFailed("hue to Int failed")
             }
             self.state.hue = hue
             
         case "sat":
             guard let sat = value as? Int else {
-                throw LightStateUpdateError.value("sat to Int failed")
+                throw LightStateUpdateError.valueToDataTypeFailed("sat to Int failed")
             }
             self.state.sat = sat
             
         case "name":
             guard let name = value as? String else {
-                throw LightStateUpdateError.value("name to String failed")
+                throw LightStateUpdateError.valueToDataTypeFailed("name to String failed")
             }
             self.info.name = name
             
         case "flowing":
             guard let flow = value as? Int else {
-                throw LightStateUpdateError.value("flow state to Bool failed")
+                throw LightStateUpdateError.valueToDataTypeFailed("flow state to Bool failed")
             }
             self.state.flowing = flow == 1 ? true : false
             
         case "flow_params":
             guard let string: String = value as? String else {
-                throw LightStateUpdateError.value("flow params to String failed")
+                throw LightStateUpdateError.valueToDataTypeFailed("flow params to String failed")
             }
             
             let stringNoSpace: String = string.replacingOccurrences(of: " ", with: "")
@@ -230,7 +230,7 @@ public class Light {
             
             for i in stringComponents {
                 guard let intComponent = Int(i) else {
-                    throw LightStateUpdateError.value("flow param component to Int failed")
+                    throw LightStateUpdateError.valueToDataTypeFailed("flow param component to Int failed")
                 }
                 params.append(intComponent)
             }
@@ -239,13 +239,13 @@ public class Light {
             
         case "music_on":
             guard let limitlessTCPMode = value as? Int else {
-                throw LightStateUpdateError.value("limitless TCP mode state to Bool failed")
+                throw LightStateUpdateError.valueToDataTypeFailed("limitless TCP mode state to Bool failed")
             }
             self.state.limitlessTCPMode = limitlessTCPMode == 1 ? true : false
             
         case "delayoff":
             guard let mins = value as? Int else {
-                throw LightStateUpdateError.value("delay countdown to Int failed")
+                throw LightStateUpdateError.valueToDataTypeFailed("delay countdown to Int failed")
             }
             self.state.delayCountDownMins = mins
             
@@ -292,11 +292,16 @@ public class Light {
         
         
         // jsonserialization object
+        if !JSONSerialization.isValidJSONObject(data) {
+            throw JSONError.jsonObject("jsonDecodeAndHandle: Not a valid JSON object")
+        }
+        
         let json = try JSONSerialization.jsonObject(with: data, options: [])
+        
         
         // unpack the top level json object
         guard let topLevel = json as? [String:Any] else {
-            throw JSONError.jsonObject("jsonDecodeAndHandle: Not valid JSON object")
+            throw JSONError.jsonObject("jsonDecodeAndHandle: Not a valid JSON object")
         }
         
         // results

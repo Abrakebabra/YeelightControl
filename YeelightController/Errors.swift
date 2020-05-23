@@ -9,52 +9,40 @@
 import Foundation
 
 
-
-// make an error handler where every time an error is thrown, a didSet variable will notify any other part of a program
-
-
-
-public enum DiscoveryError: Error {
+/// LightController discovery errors
+internal enum DiscoveryError: Error {
     case tcpInitFailed(String)
-    case propertyKey
-    case idValue
+    case lightSearchTimedOut
+    case propertyKey                // dictionary no element error when creating light
+    case idValue                    // dictionary no element error when creating light
 }
 
 
-public enum ListenerError: Error {
-    case listenerFailed
-    case noConnectionFound
-}
-
-public enum ConnectionError: Error {
-    case endpointNotFound
-    case connectionNotMade
-    case receiveData(String)
+/// Connection errors
+internal enum ConnectionError: Error {
+    case localEndpointNotFound
+    case noConnectionFound(String)
+    case connectionNotMade(String)
 }
 
 
-public enum RequestError: Error {
-    case stringToData
-    case methodNotValid // not yet used
-}
-
-
-public enum JSONError: Error {
+/// Light JSON decode errors
+internal enum JSONError: Error {
     case jsonObject(String)
     case errorObject(String)
     case response(String)
-    case noData
     case unknown(Any?)
 }
 
 
-// change this or make a new one to reflect the new state updater?
-public enum LightStateUpdateError: Error {
-    case value(String)
+/// Light state update error
+internal enum LightStateUpdateError: Error {
+    case valueToDataTypeFailed(String)
 }
 
 
-public enum MethodError: Error {
+/// LightCommand errors
+internal enum MethodError: Error {
     case valueBeyondMin(String)
     case valueBeyondMax(String)
     case fewerChangesThanStatesEntered

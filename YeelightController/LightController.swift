@@ -95,12 +95,13 @@ fileprivate class UDPConnection: Connection {
     
     
     // Listen for reply from multicast
-    fileprivate func listener(on port: NWEndpoint.Port, wait mode: DiscoveryWait, _ closure: @escaping ([Data]) -> Void) {
+    fileprivate func listen(on port: NWEndpoint.Port, wait mode: DiscoveryWait, _ closure: @escaping ([Data]) -> Void) throws {
         
         let listenerGroup = DispatchGroup()
         var waitCount: Int = 0 // default lightCount
         var waitTime: UInt64 = 5 // default timeout seconds
-        let futureTime = DispatchTime(uptimeNanoseconds: DispatchTime.now().uptimeNanoseconds + waitTime * 1000000000)
+        let futureTime = DispatchTime(uptimeNanoseconds: DispatchTime.now().uptimeNanoseconds + waitTime * 1_000_000_000)
+        
         
         switch mode {
         // if mode is count, wait for light count before returning
@@ -116,23 +117,25 @@ fileprivate class UDPConnection: Connection {
         }
         
         
-        guard let listener = try? NWListener(using: .udp, on: port) else {
-            print("Listener failed")
-            return
+        // ensures that dispatchGroup.wait in calling function is released if the listener fails and throws an error.
+        defer {
+            self.dispatchGroup.leave() // unlock 2 (entered in self.sendSearchMessage)
         }
+        
+        let listener = try? NWListener(using: .udp, on: port)
         
         // Holds all the data received
         var dataArray: [Data] = []
         
-        listener.newConnectionHandler = { (udpNewConn) in
+        listener?.newConnectionHandler = { (udpNewConn) in
             // create connection, listen to reply and save data
             udpNewConn.start(queue: self.serialQueue)
             
-            udpNewConn.receiveMessage(completion: { (data, _, _, error) in
+            udpNewConn.receiveMessage {
+                (data, _, _, error) in
                 
                 if error != nil {
                     print(error.debugDescription)
-                    
                 }
                 
                 if let data = data {
@@ -142,39 +145,36 @@ fileprivate class UDPConnection: Connection {
                             dataArray.append(data) // save data
                             listenerGroup.leave() // reduce wait count
                         }
-                        
                     case .timeoutSeconds:
                         dataArray.append(data)
                     } // switch
                 } // data? unwrap
-            }) // receiveMessage
-            
+            } // receiveMessage
         } // newConnectionHandler
         
+        // start the search
+        listener?.start(queue: self.serialQueue)
         
-        // start the light
-        listener.start(queue: self.serialQueue)
-        
-        // wait time, or timeout if not all expected lights found
+        // wait for light count, or timeout if not all expected lights found or set to search for a set amount of time
         if listenerGroup.wait(timeout: futureTime) == .success {
-            print("listener successfully returned \(waitCount) lights")
+            print("listener successfully found \(dataArray.count) lights.")
             
         } else {
-            print("listener cancelled after \(futureTime.uptimeNanoseconds / 1000000000) seconds")
+            print("listener cancelled after \(futureTime.uptimeNanoseconds / 1_000_000_000) seconds.  Found \(dataArray.count) lights.")
+            listenerGroup.leave()
         }
         
         // pass data to the closure, cancel the listener and signal that the calling function can progress with the data
         closure(dataArray)
-        listener.cancel()
-        self.dispatchGroup.leave() // unlock 2 (entered in self.sendSearchMessage)
+        listener?.cancel()
     } // UDPConnection.listener()
     
     
     
-    fileprivate func sendSearchMessage(wait mode: DiscoveryWait, _ closure:@escaping ([Data]) -> Void) {
+    fileprivate func sendSearchMessage(wait mode: DiscoveryWait, _ closure:@escaping ([Data]) -> Void) throws {
         
         // 1 second to ready the connection
-        let connPrepTimeout = DispatchTime(uptimeNanoseconds: DispatchTime.now().uptimeNanoseconds + 1 * 1000000000)
+        let connPrepTimeout = DispatchTime(uptimeNanoseconds: DispatchTime.now().uptimeNanoseconds + 1 * 1_000_000_000)
         
         self.dispatchGroup.enter() // lock 1
         // wait for self.conn to be in ready state
@@ -186,8 +186,7 @@ fileprivate class UDPConnection: Connection {
         // wait lock 1
         // waiting for connection state to be .ready
         if self.dispatchGroup.wait(timeout: connPrepTimeout) == .timedOut {
-            print("Search UDP connection timed out")
-            return
+            throw DiscoveryError.lightSearchTimedOut
         } // wait lock 1 (with timeout)
         
         // send a search message
@@ -201,14 +200,19 @@ fileprivate class UDPConnection: Connection {
         
         self.dispatchGroup.enter() // lock 2
         // Listen for light replies and create a new light tcp connection
-        self.listener(on: localHostPort.1, wait: mode) {
+        
+        defer {
+            self.conn.cancel()
+        }
+        
+        try self.listen(on: localHostPort.1, wait: mode) {
             (dataArray) in
             closure(dataArray)
         }
         
         // wait for UDPConnection.listener() to collect data
         self.dispatchGroup.wait() // wait lock 2 - unlock in listener() - also with timeout
-        self.conn.cancel()
+        
     } // UDPConnection.sendSearchMessage()
     
     
@@ -397,10 +401,17 @@ public class LightController {
         var udp: UDPConnection? = UDPConnection()
         
         // establish
-        udp?.sendSearchMessage(wait: mode) { (dataArray) in
-            for i in dataArray {
-                self.decodeParseAndEstablish(i)
+        do {
+            try udp?.sendSearchMessage(wait: mode) {
+                (dataArray) in
+                
+                for i in dataArray {
+                    self.decodeParseAndEstablish(i)
+                }
             }
+        }
+        catch let error {
+            print(error)
         }
         
         udp = nil
@@ -409,7 +420,7 @@ public class LightController {
     
     
     /// Set an alias for the lights instead of using the IDs.  Closure must return a string back into the function as the alias.  Handling of input method is done here.  NameTaken Bool returns true if the name already exists. Code locked until unique alias provided. An empty string will save the light's ID as the alias.
-    public func setLightAlias(inputMethod:@escaping (NameTakenBool) -> String) -> Void {
+    public func setLightAlias(closureInputMethod:@escaping (NameTakenBool) -> String) -> Void {
         
         let aliasGroup = DispatchGroup()
         let aliasQueue = DispatchQueue(label: "Alias Queue")
@@ -445,7 +456,7 @@ public class LightController {
             aliasQueue.async {
                 
                 while true {
-                    let input = inputMethod(nameTaken)
+                    let input = closureInputMethod(nameTaken)
                     if input != "" {
                         alias = input
                     }
@@ -457,7 +468,7 @@ public class LightController {
                 }
                 
                 aliasGroup.leave()
-            }
+            } // aliasQueue.async
             
             aliasGroup.wait()
             self.savedAliasIDs[alias] = id

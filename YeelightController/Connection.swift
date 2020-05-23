@@ -127,7 +127,9 @@ public class Connection {
         /*
          conn.receive(minimumIncompleteLength: 1, maximumLength: 65536) not used.  Sometimes two messages from the light received in quick succession are joined together into one message.  receiveMessage ends when the message is marked as complete.
         */
-        self.conn.receiveMessage { (data, _, _, error) in
+        self.conn.receiveMessage {
+            (data, _, _, error) in
+            
             if error != nil {
                 var host = "Unknown"
                 if let unwrappedHost = self.remoteHost {
@@ -184,6 +186,17 @@ public class Connection {
     } // stateUpdateHandler()
     
     
+    private func setLocalHostAndPort(_ localHostPort: (NWEndpoint.Host, NWEndpoint.Port)?) throws {
+        
+        if let localHostPort = localHostPort {
+            self.localHost = localHostPort.0
+            self.localPort = localHostPort.1
+        } else {
+            throw ConnectionError.localEndpointNotFound
+        }
+    }
+    
+    
     // init new connection
     internal init(host: NWEndpoint.Host, port: NWEndpoint.Port, serialQueueLabel: String, connType: NWParameters, receiveLoop: Bool) {
         
@@ -206,11 +219,14 @@ public class Connection {
         self.statusReady = {
             // used for establishing music mode tcp connections so code to find local port is cleaner
             let localHostPort = self.getHostPort(endpoint: .local)
-            if let localHostPort = localHostPort {
-                self.localHost = localHostPort.0
-                self.localPort = localHostPort.1
-            } else {
-                print("Can't establish local host and port")
+            
+            do {
+                try self.setLocalHostAndPort(localHostPort)
+                
+            }
+            catch let error {
+                print(error)
+                
             }
             
             // actively receive messages received and set up new receiver
@@ -246,11 +262,12 @@ public class Connection {
         self.statusReady = {
             // not required but for completeness
             let localHostPort = self.getHostPort(endpoint: .local)
-            if let localHostPort = localHostPort {
-                self.localHost = localHostPort.0
-                self.localPort = localHostPort.1
-            } else {
-                print("Can't establish local host and port")
+            
+            do {
+                try self.setLocalHostAndPort(localHostPort)
+            }
+            catch let error {
+                print(error)
             }
             
             // actively receive messages received and set up new receiver

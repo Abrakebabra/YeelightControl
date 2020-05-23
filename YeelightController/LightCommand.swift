@@ -623,7 +623,6 @@ public struct LightCommand {
         private var p2_listenerHost: String?
         private var p3_listenerPort: Int?
         
-        private var listener: NWListener?
         private let targetLight: Light
         private let controlQueue = DispatchQueue(label: "Control Queue")
         private let controlGroup = DispatchGroup()
@@ -631,7 +630,7 @@ public struct LightCommand {
         
         
         /// closure(listenerPort: Int)
-        private func listen(_ closure:@escaping (Int) -> Void) throws -> Void {
+        private func listen(_ closure:@escaping (_ port: Int) -> Void) throws -> Void {
             
             // ... step 3 continues asynchronously... to step 6 below
             
@@ -640,14 +639,15 @@ public struct LightCommand {
             // queue
             let serialQueue = DispatchQueue(label: "TCP Queue")
             // setup listener in class to be cancelled via another function
-            self.listener = try? NWListener(using: .tcp)
-            // was listener successfully set up?
-            guard let listener = self.listener else {
-                throw ListenerError.listenerFailed
+            let listener = try? NWListener(using: .tcp)
+            
+            
+            defer {
+                listener?.cancel()
             }
             
             
-            listener.newConnectionHandler = { (newConn) in
+            listener?.newConnectionHandler = { (newConn) in
                 
                 // STEP 9:  The light receives the message and now attempts to connect to the listener's IP and Port.
                 
@@ -672,14 +672,14 @@ public struct LightCommand {
             } // listener
             
             
-            listener.stateUpdateHandler = { (newState) in
+            listener?.stateUpdateHandler = { (newState) in
                 switch newState {
                 case .ready:
                     
                     // STEP 7:  Once listener state is ready, it passes the port it selected to the escaping closure which sets self.p3_listenerPort and RELEASE LOCK 1.
                     
                     // get port and allow it to be accessed in closure to be used as parameter in command to light
-                    if let listenerPort = listener.port?.rawValue {
+                    if let listenerPort = listener?.port?.rawValue {
                         closure(Int(listenerPort))
                     }
                 case .failed(let error):
@@ -691,7 +691,7 @@ public struct LightCommand {
             
             
             listenerGroup.enter()
-            listener.start(queue: serialQueue)
+            listener?.start(queue: serialQueue)
             
             // length of time to wait until
             let waitTime: UInt64 = 1 // default timeout seconds
@@ -701,16 +701,11 @@ public struct LightCommand {
             
             // wait 1 second to establish limitless TCP.  If not found, cancel listener.
             if listenerGroup.wait(timeout: futureTime) == .timedOut {
-                print("Listener: No connection available for music TCP")
-                listener.cancel()
-                listenerGroup.leave()
-                throw ListenerError.noConnectionFound
+                throw ConnectionError.noConnectionFound("Listener: No connection available for music TCP")
             }
             
-            // STEP 11:  Listener is cancelled and entire function is now complete.
+            // STEP 11:  Listener is cancelled (defer statement) and entire function is now complete.
             
-            // on success
-            listener.cancel()
         } // LightCommand.limitlessChannel.listen()
         
         
@@ -725,15 +720,14 @@ public struct LightCommand {
             case .on:
                 
                 if self.targetLight.state.limitlessTCPMode == true {
-                    print("Already an existing limitless TCP connection")
-                    throw ConnectionError.connectionNotMade
+                    throw ConnectionError.connectionNotMade("Already an existing limitless TCP connection")
                 }
                 
                 self.p1_action = 1
                 
                 // find the local IP
                 guard let localEndpoint = self.targetLight.tcp.getHostPort(endpoint: .local) else {
-                    throw ConnectionError.endpointNotFound
+                    throw ConnectionError.localEndpointNotFound
                 }
                 
                 // local IP is listener IP to send to light
