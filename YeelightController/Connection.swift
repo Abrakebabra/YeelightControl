@@ -127,6 +127,27 @@ public class Connection {
         /*
          conn.receive(minimumIncompleteLength: 1, maximumLength: 65536) not used.  Sometimes two messages from the light received in quick succession are joined together into one message.  receiveMessage ends when the message is marked as complete.
         */
+        
+        
+        /*
+         self.conn.receive(minimumIncompleteLength: 1, maximumLength: 65536) {
+         (data, _, _, error) in
+         
+         if error != nil {
+         var host = "Unknown"
+         if let unwrappedHost = self.remoteHost {
+         host = String(reflecting: unwrappedHost)
+         }
+         print("Conn receive error: \(host):  \(String(reflecting: error))")
+         
+         } else {
+         self.newData = data
+         self.receiveRecursively()
+         }
+         
+         }
+        */
+        
         self.conn.receiveMessage {
             (data, _, _, error) in
             
@@ -141,7 +162,8 @@ public class Connection {
                 self.newData = data
                 self.receiveRecursively()
             }
-        }
+        } // receiveMessage
+        
     } // Connection.receiveRecursively()
     
     
@@ -192,7 +214,7 @@ public class Connection {
             self.localHost = localHostPort.0
             self.localPort = localHostPort.1
         } else {
-            throw ConnectionError.localEndpointNotFound
+            throw ConnectionError.localEndpointNotFound("Connection")
         }
     }
     

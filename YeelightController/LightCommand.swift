@@ -466,6 +466,10 @@ public struct LightCommand {
     public struct flowStop {
         private let method: String = "stop_cf"
         
+        public init() {
+            return
+        }
+        
         /// output as string in correct format for the light
         public func string() -> String {
             return LightCommand().methodParamString(self.method)
@@ -727,7 +731,7 @@ public struct LightCommand {
                 
                 // find the local IP
                 guard let localEndpoint = self.targetLight.tcp.getHostPort(endpoint: .local) else {
-                    throw ConnectionError.localEndpointNotFound
+                    throw ConnectionError.localEndpointNotFound("limitlessChannel")
                 }
                 
                 // local IP is listener IP to send to light
@@ -752,20 +756,27 @@ public struct LightCommand {
                     }
                 } // controlQueue.async
                 
+                // STEP 5:  init is now waiting at end of closure before completion, blocking the calling thread (Thread A).  LOCK 1. Next step in listen().
+                
+                // length of time to wait until
+                let futureTime = DispatchTime(uptimeNanoseconds: DispatchTime.now().uptimeNanoseconds + 500000000) // 0.5s
+                if self.controlGroup.wait(timeout: futureTime) == .timedOut {
+                    print("listener failed to set up and establish port")
+                } // control lock
+                
+                // Step 8:  Initialiser is now complete.  The string is sent to the light. (listener still waiting in Thread B).  Next step in listener newConn handler.
+                
+                
             case .off:
+                /*
+                 Instruction to cancel limitless TCP connection sent to light
+                 Light responds with state update, notifying that music_mode is set to 0.
+                 When the update is received, the program updates the struct State
+                 When the state is updated to false, a closure (limitlessTCPModeOffNotify) is executed.
+                 The closure in class Light init() will then cancel the connection and deinit the connection variable.
+                */
                 self.p1_action = 0
-                // connection cancel and deinit is handled by Light class.
             } // switch
-            
-            // STEP 5:  init is now waiting at end of closure before completion, blocking the calling thread (Thread A).  LOCK 1. Next step in listen().
-            
-            // length of time to wait until
-            let futureTime = DispatchTime(uptimeNanoseconds: DispatchTime.now().uptimeNanoseconds + 500000000) // 0.5s
-            if self.controlGroup.wait(timeout: futureTime) == .timedOut {
-                print("listener failed to set up and establish port")
-            } // control lock
-            
-            // Step 8:  Initialiser is now complete.  The string is sent to the light. (listener still waiting in Thread B).  Next step in listener newConn handler.
             
         } // LightCommand.limitlessChannel.init()
         

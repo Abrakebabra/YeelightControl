@@ -20,7 +20,7 @@ internal enum DiscoveryError: Error {
 
 /// Connection errors
 internal enum ConnectionError: Error {
-    case localEndpointNotFound
+    case localEndpointNotFound(String)
     case noConnectionFound(String)
     case connectionNotMade(String)
 }

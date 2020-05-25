@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		64003F1C247AB7C70059E4E2 /* libYeelightController.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 64003F18247AB7C70059E4E2 /* libYeelightController.a */; };
 		64FA0DB92451EF5B009A46B9 /* YeelightController.h in Headers */ = {isa = PBXBuildFile; fileRef = 64FA0DB82451EF5B009A46B9 /* YeelightController.h */; };
 		64FA0DBB2451EF5B009A46B9 /* YeelightController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64FA0DBA2451EF5B009A46B9 /* YeelightController.m */; };
 		64FA0DC22451EF6C009A46B9 /* LightController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64FA0DC12451EF6C009A46B9 /* LightController.swift */; };
@@ -17,6 +18,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		64003F18247AB7C70059E4E2 /* libYeelightController.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libYeelightController.a; sourceTree = "<group>"; };
+		64003F1A247AB7C70059E4E2 /* x86_64.swiftdoc */ = {isa = PBXFileReference; lastKnownFileType = file; path = x86_64.swiftdoc; sourceTree = "<group>"; };
+		64003F1B247AB7C70059E4E2 /* x86_64.swiftmodule */ = {isa = PBXFileReference; lastKnownFileType = file; path = x86_64.swiftmodule; sourceTree = "<group>"; };
 		64FA0DB52451EF5B009A46B9 /* libYeelightController.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libYeelightController.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		64FA0DB82451EF5B009A46B9 /* YeelightController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YeelightController.h; sourceTree = "<group>"; };
 		64FA0DBA2451EF5B009A46B9 /* YeelightController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = YeelightController.m; sourceTree = "<group>"; };
@@ -32,15 +36,36 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				64003F1C247AB7C70059E4E2 /* libYeelightController.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		64003F17247AB7C70059E4E2 /* Lib */ = {
+			isa = PBXGroup;
+			children = (
+				64003F18247AB7C70059E4E2 /* libYeelightController.a */,
+				64003F19247AB7C70059E4E2 /* YeelightController.swiftmodule */,
+			);
+			name = Lib;
+			path = ../LibraryTestCL/Lib;
+			sourceTree = "<group>";
+		};
+		64003F19247AB7C70059E4E2 /* YeelightController.swiftmodule */ = {
+			isa = PBXGroup;
+			children = (
+				64003F1A247AB7C70059E4E2 /* x86_64.swiftdoc */,
+				64003F1B247AB7C70059E4E2 /* x86_64.swiftmodule */,
+			);
+			path = YeelightController.swiftmodule;
+			sourceTree = "<group>";
+		};
 		64FA0DAC2451EF5B009A46B9 = {
 			isa = PBXGroup;
 			children = (
+				64003F17247AB7C70059E4E2 /* Lib */,
 				64FA0DB72451EF5B009A46B9 /* YeelightController */,
 				64FA0DB62451EF5B009A46B9 /* Products */,
 			);
@@ -273,6 +298,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SWIFT_INCLUDE_PATHS = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
@@ -292,6 +318,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SWIFT_INCLUDE_PATHS = "";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;

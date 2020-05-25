@@ -292,9 +292,6 @@ public class Light {
         
         
         // jsonserialization object
-        if !JSONSerialization.isValidJSONObject(data) {
-            throw JSONError.jsonObject("jsonDecodeAndHandle: Not a valid JSON object")
-        }
         
         let json = try JSONSerialization.jsonObject(with: data, options: [])
         
@@ -324,7 +321,7 @@ public class Light {
                 else {
                     // if can't unpack error object
                     throw JSONError.errorObject("jsonDecodeAndHandle: Not valid JSON object")
-            }
+            } // guard let
             
             if let id = topLevel["id"] as? Int {
                 throw JSONError.response("id: \(id)  Error Code \(errorCode): \(errorMessage)")
@@ -385,6 +382,10 @@ public class Light {
                 }
                 catch let error {
                     print("JSON decode error: \(error)\nData Received: \(String(describing: String(bytes: data, encoding: .utf8)))")
+                }
+                
+                if self.printCommunication == true {
+                    print("Received:  \(String(bytes: data, encoding: .utf8) ?? "Data unable to be decoded.")")
                 }
             }
         }
