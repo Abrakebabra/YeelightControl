@@ -623,7 +623,7 @@ public struct LightCommand {
          
          */
         private let method: String = "set_music"
-        private let p1_action: Int
+        private let p1_action: Int              // binary 1 for on, 0 for off.
         private var p2_listenerHost: String?
         private var p3_listenerPort: Int?
         
@@ -666,6 +666,7 @@ public struct LightCommand {
                             // STEP 10:  Listener finds the light, checks its IP against the light it was targetting.  If the IP found does not match, it will ignore.  If the IP matches, it will create a new Connection instance and save it directly to the Light instance passed to this Struct.  If found, it will immediately RELEASE LOCK 2 in the listener.
                             
                             self.targetLight.limitlessTCP = Connection(existingConn: newConn, existingQueue: serialQueue, remoteHost: host, remotePort: port, receiveLoop: false)
+                            self.targetLight.state.limitlessTCPMode = true
                             listenerGroup.leave()
                         } // if new connection IP and target IP match
                         
@@ -775,7 +776,11 @@ public struct LightCommand {
                  When the state is updated to false, a closure (limitlessTCPModeOffNotify) is executed.
                  The closure in class Light init() will then cancel the connection and deinit the connection variable.
                 */
+                
+                // update 2020 May 26 - Yeelight firmware update no longer sends back state updates.
+                
                 self.p1_action = 0
+                self.targetLight.state.limitlessTCPMode = false
             } // switch
             
         } // LightCommand.limitlessChannel.init()

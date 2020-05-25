@@ -446,6 +446,8 @@ public class Light {
         
         // if limitless TCP mode has been established, all TCP commands are sent to the new connection without limit
         if self.state.limitlessTCPMode == true {
+            // debug
+            // print("self.state.limitlessTCPMode == true")
             if let limitlessTCPConn = self.limitlessTCP?.conn {
                 tcpConnection = limitlessTCPConn
             }
