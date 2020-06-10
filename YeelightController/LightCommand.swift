@@ -88,9 +88,11 @@ import Network // for noLimitTCP listener
 // public struct LightCommand.setHardwareName
 
 
+// MARK: |<  enum InputOptions
 /// Railroads input options from String and Int into safe and understandable enumerations that handle the conversion into data types according to Yeelight's protocol.
 public enum InputOptions {
     
+    // MARK: enum Effect
     /// Gradual or sudden change.
     public enum Effect {
         case sudden
@@ -106,6 +108,7 @@ public enum InputOptions {
         }
     } // InputOptions.Effect
     
+    // MARK: enum OnOff
     /// Switch on or off.
     public enum OnOff {
         case on
@@ -121,6 +124,7 @@ public enum InputOptions {
         }
     } // InputOptions.OnOff
     
+    // MARK: enum NumOfStateChanges
     /// How many state changes for flowStart.
     public enum NumOfStateChanges {
         case infinite
@@ -137,6 +141,7 @@ public enum InputOptions {
         }
     } // InputOptions.NumOfStateChanges
     
+    // MARK: enum OnCompletion
     /// What the light should do when it exits a flow state.
     public enum OnCompletion {
         case returnPrevious
@@ -160,6 +165,7 @@ public enum InputOptions {
         }
     } // InputOptions.OnCompletion
     
+    // MARK: enum SetState
     /// Creates a tuple of 4 integers for each color state.  RGB and color temp modes only.  No hsv mode.
     public enum SetState {
         /// rgb range: 1-16777215, brightness range: 1-100, duration min = 50ms (as default).
@@ -195,13 +201,16 @@ public enum InputOptions {
 
 
 
+// MARK: |< class ColorConverter
 /// Converters for different methods of storing color value
 public class ColorConverter {
     
+    // MARK: init
     public init() {
         return
     }
     
+    // MARK: func rgbIntToTuple
     public func rgbIntToTuple(rgb: Int) -> (Int, Int, Int) {
         let gBitMask: Int = 0b000000001111111100000000
         let bBitMask: Int = 0b000000000000000011111111
@@ -211,6 +220,7 @@ public class ColorConverter {
                 rgb & bBitMask)
     }
     
+    // MARK: func rgbTupleToInt
     public func rgbTupleToInt(r: Int, g: Int, b: Int) -> Int {
         let rg = (r << 8) | g
         let rgb = (rg << 8) | b
@@ -221,11 +231,13 @@ public class ColorConverter {
 
 
 
+// MARK: |<  struct LightCommand
 /// A structure to eliminate errors in commands sent to the light.  It ensures that all methods and parameters meet the light's protocol.
 public struct LightCommand {
     //"effect" support two values: "sudden" and "smooth". If effect is "sudden", then the color temperature will be changed directly to target value, under this case, the third parameter "duration" is ignored. If effect is "smooth", then the color temperature will be changed to target value in a gradual fashion, under this case, the total time of gradual change is specified in third parameter "duration".
     //"duration" specifies the total time of the gradual changing. The unit is milliseconds. The minimum support duration is 30 milliseconds.
     
+    // MARK: func methodParamString
     // encode commands to required format for light
     private func methodParamString(_ method: String, _ param1: Any? = nil, _ param2: Any? = nil, _ param3: Any? = nil, _ param4: Any? = nil) -> String {
         /*
@@ -258,6 +270,7 @@ public struct LightCommand {
     } // LightCommand.methodParamString()
     
     
+    // MARK: func valueInRange
     // checks that a range is within the bounds per specifications
     fileprivate func valueInRange(_ valueName: String, _ value: Int, min: Int, max: Int? = nil) throws -> Void {
         
@@ -275,6 +288,7 @@ public struct LightCommand {
     
     // no get_prop method
     
+    // MARK: struct colorMap
     /// Set color temperature.  1700-6500 Kelvin.
     public struct colorTemp {
         private let method: String = "set_ct_abx"
@@ -298,6 +312,7 @@ public struct LightCommand {
     } // LightCommand.set_colorTemp
     
     
+    // MARK: struct colorRGB
     /// Set the RGB value of the light.
     public struct colorRGB {
         private let method = "set_rgb"
@@ -321,6 +336,7 @@ public struct LightCommand {
     } // LightCommand.set_rgb
     
     
+    // MARK: struct colorHSV
     /// Set the hue and saturation of the light.
     public struct colorHSV {
         private let method: String = "set_hsv"
@@ -347,6 +363,7 @@ public struct LightCommand {
     } // LightCommand.set_hsv
     
     
+    // MARK: struct brightness
     /// Set the brightness of the light.
     public struct brightness {
         private let method: String = "set_bright"
@@ -370,6 +387,7 @@ public struct LightCommand {
     } // LightCommand.set_bright
     
     
+    // MARK: struct power
     /// Turn the light on or off.
     public struct power {
         private let method: String = "set_power"
@@ -397,6 +415,7 @@ public struct LightCommand {
     // no set_default method
     
     
+    // MARK: struct flowStart
     /// Program an order of states for the light to flow through.  Can be a finite number of state changes, or an infinite loop until stopped.
     public struct flowStart {
         
@@ -462,6 +481,7 @@ public struct LightCommand {
     } // LightCommand.set_colorFlow
     
     
+    // MARK: struct flowStop
     /// Cancels the current color flow state.
     public struct flowStop {
         private let method: String = "stop_cf"
@@ -477,11 +497,13 @@ public struct LightCommand {
     } // LightCommand.set_colorFlowStop
     
     
+    // MARK struct colorAndBrightness
     /// Send rgb, hsv, or color temp change, along with brightness in a single command.
     public struct colorAndBrightness {
         // leaving out color flow because it doesn't benefit from having an additional method through set_scene whereas rgb and ct can adjust brightness in a single command rather than separately.
         // Might review color flow in the future (10 April 2020).
         
+        // MARK: struct rgb
         /// Red, green, blue.
         public struct rgb {
             private let method: String = "set_scene"
@@ -502,6 +524,7 @@ public struct LightCommand {
             }
         } // LightCommand.set_scene.rgb_bright
         
+        // MARK: struct hsv
         /// Hue, saturation, brightness.
         public struct hsv {
             private let method: String = "set_scene"
@@ -526,6 +549,7 @@ public struct LightCommand {
             }
         } // LightCommand.set_scene.hsv_bright
         
+        // MARK: struct colorTemp
         /// Color temperature in Kelvin.  1700-6500K.
         public struct colorTemp {
             private let method: String = "set_scene"
@@ -555,6 +579,7 @@ public struct LightCommand {
     // no set_adjust method
     
     
+    // MARK: class limitlessChannel
     /// Special TCP connection with no limit to the number of commands.  The light does not send back any responses.  A state update is sent back when the limitless channel is closed.
     public class limitlessChannel {
         /*
@@ -632,7 +657,7 @@ public struct LightCommand {
         private let controlGroup = DispatchGroup()
         
         
-        
+        // MARK: func listen
         /// closure(listenerPort: Int)
         private func listen(_ closure:@escaping (_ port: Int) -> Void) throws -> Void {
             
@@ -714,6 +739,7 @@ public struct LightCommand {
         } // LightCommand.limitlessChannel.listen()
         
         
+        // MARK: init
         /// light: target light to affect, and simple .on or .off.  Off instances will cancel the limitless TCP connection, and upon cancellation will deinit the Connection instance.
         public init(light: Light, switch state: InputOptions.OnOff) throws {
             
@@ -795,6 +821,7 @@ public struct LightCommand {
     } // LightCommand.limitlessChannel
     
     
+    // MARK: struct setHardwareName
     public struct setHardwareName {
         private let method: String = "set_name"
         private let p1_name: String

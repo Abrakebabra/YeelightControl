@@ -53,6 +53,7 @@ import Network
 
 
 
+// MARK: |<  struct State
 /// The current state of the light's properties
 public struct State {
     public var power: Bool
@@ -145,6 +146,7 @@ public struct Info {
 
 
 
+// MARK: |<  class Light
 public class Light {
     
     /// The current state of the light's properties.
@@ -161,6 +163,7 @@ public class Light {
     private let deinitControl = DispatchGroup()
     
     
+    // MARK: func updateState
     // update the state of the light
     private func updateState(_ key: String, _ value: Any) throws {
         switch key {
@@ -256,6 +259,7 @@ public class Light {
     } // Light.updateState()
     
     
+    // MARK: func jsonDecodeAndHandle
     // decode response received from light and handle them
     private func jsonDecodeAndHandle(_ data: Data) throws {
         /*
@@ -349,6 +353,7 @@ public class Light {
     
     
     
+    // MARK: init
     internal init(_ id: String, _ ip: String, _ port: String,
          _ power: String, _ colorMode: String, _ brightness: String,
          _ colorTemp: String, _ rgb: String, _ hue: String, _ sat: String,
@@ -414,6 +419,7 @@ public class Light {
     
     
     
+    // MARK: func communicate
     /// Send a command String to the light created by a LightCommand.___.string() command.
     public func communicate(_ methodParams: String) {
         // takes in a command
@@ -482,6 +488,7 @@ public class Light {
     } // Light.communicate()
     
     
+    // MARK: printCommunications
     /// Print communication received from light.  False by default.
     public func printCommunications(_ setting: Bool) {
         self.printCommunication = setting

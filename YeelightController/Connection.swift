@@ -26,6 +26,7 @@ import Network
 
 
 
+// MARK: |<  class Connection
 /// Handles the connection
 public class Connection {
     // local addr, port
@@ -95,6 +96,7 @@ public class Connection {
     }
     
     
+    // MARK: func getHostPort
     // Get the local port opened to send
     // Return nil if no hostPort connection found
     internal func getHostPort(endpoint: EndpointLocation) -> (NWEndpoint.Host, NWEndpoint.Port)? {
@@ -122,6 +124,7 @@ public class Connection {
     } // Connection.getHostPort()
     
     
+    // MARK: func receiveRecursively
     // handles the receiving from tcp conn with light
     private func receiveRecursively() -> Void {
         /*
@@ -167,6 +170,7 @@ public class Connection {
     } // Connection.receiveRecursively()
     
     
+    // MARK: func stateUpdateHandler
     // separated so that init overrides don't need to include all this again
     private func stateUpdateHandler() {
         
@@ -208,6 +212,7 @@ public class Connection {
     } // stateUpdateHandler()
     
     
+    // MARK: func setLocalHostAndPort
     private func setLocalHostAndPort(_ localHostPort: (NWEndpoint.Host, NWEndpoint.Port)?) throws {
         
         if let localHostPort = localHostPort {
@@ -219,6 +224,7 @@ public class Connection {
     }
     
     
+    // MARK: init - new conn
     // init new connection
     internal init(host: NWEndpoint.Host, port: NWEndpoint.Port, serialQueueLabel: String, connType: NWParameters, receiveLoop: Bool) {
         
@@ -261,6 +267,7 @@ public class Connection {
     } // Connection.init() newConn
     
     
+    // MARK: init - existing conn
     // init with existing connection
     internal init(existingConn: NWConnection, existingQueue: DispatchQueue, remoteHost: NWEndpoint.Host, remotePort: NWEndpoint.Port, receiveLoop: Bool) {
         

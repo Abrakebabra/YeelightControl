@@ -52,6 +52,7 @@ import Network
 // public class LightController.setLightAlias
 
 
+// MARK: |<  enum DiscoveryWait
 public enum DiscoveryWait {
     /// Look for this number of lights.  Time out if can't find.
     case lightCount(Int)
@@ -76,6 +77,7 @@ public enum DiscoveryWait {
 
 
 
+// MARK: |<  class UDPConnection
 fileprivate class UDPConnection: Connection {
     
     // search message
@@ -84,6 +86,7 @@ fileprivate class UDPConnection: Connection {
     
     
     
+    // MARK: init
     fileprivate init() {
         let udpParams = NWParameters.udp
         udpParams.acceptLocalOnly = true
@@ -94,6 +97,7 @@ fileprivate class UDPConnection: Connection {
     } // UDPConnection.init()
     
     
+    // MARK: func listen
     // Listen for reply from multicast
     fileprivate func listen(on port: NWEndpoint.Port, wait mode: DiscoveryWait, _ closure: @escaping ([Data]) -> Void) throws {
         
@@ -171,6 +175,7 @@ fileprivate class UDPConnection: Connection {
     
     
     
+    // MARK: func sendSearchMessage
     fileprivate func sendSearchMessage(wait mode: DiscoveryWait, _ closure:@escaping ([Data]) -> Void) throws {
         
         // 1 second to ready the connection
@@ -226,6 +231,7 @@ fileprivate class UDPConnection: Connection {
 
 
 
+// MARK: |<  class LightController
 public class LightController {
     // aliases easier to read
     private typealias Property = String
@@ -243,6 +249,7 @@ public class LightController {
     public var alias: [Alias : Light] = [:]
     
     
+    // MARK: func ParseProperties
     // parse string data to store light data
     private func parseProperties(Decoded decoded: String) -> [Property:Value] {
         // dictionary of all properties cleaned and separated
@@ -290,6 +297,7 @@ public class LightController {
     } // LightController.parseData()
     
     
+    // MARK: func createLight
     // convert strings to data types and create struct
     private func createLight(_ property: [Property:Value]) throws -> Light {
         
@@ -318,6 +326,7 @@ public class LightController {
     } // LightController.createLight()
     
     
+    // MARK: func decodeParseAndEstablish
     // handles replies received from lights with listener
     private func decodeParseAndEstablish(_ data: Data) {
         
@@ -352,6 +361,7 @@ public class LightController {
     } // LightController.decodeHandler()
     
     
+    // MARK: func findLight
     // finder
     private func findLight(alias: Alias, id: ID) -> Light? {
         for (lightID, light) in self.lights {
@@ -363,6 +373,7 @@ public class LightController {
     }
     
     
+    // MARK: func setAliasReference
     // sets discovered light instance to the saved aliases.  Could be existing and rediscovering lights in case of a connection error, or setting up new.
     private func setAliasReference() {
         // clear everything
@@ -378,6 +389,7 @@ public class LightController {
     }
     
     
+    // MARK: init
     public init() {
         return
     }
@@ -389,6 +401,7 @@ public class LightController {
     // =========================================================================
     
     
+    // MARK: func discover
     /// Discover and save lights found.  Default option is timeout of 2 seconds.
     public func discover(wait mode: DiscoveryWait = .timeoutSeconds(2)) {
         // clear all existing lights and save the space in case of re-discovery
@@ -419,6 +432,7 @@ public class LightController {
     } // LightController.discover()
     
     
+    // MARK: func setLightAlias
     /// Set an alias for the lights instead of using the IDs.  Closure must return a string back into the function as the alias.  Handling of input method is done here.  NameTaken Bool returns true if the name already exists. Code locked until unique alias provided. An empty string will save the light's ID as the alias.
     public func setLightAlias(closureInputMethod:@escaping (NameTakenBool) -> String) -> Void {
         
