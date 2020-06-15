@@ -235,6 +235,10 @@ public class Connection {
         self.serialQueue = DispatchQueue(label: serialQueueLabel)
         
         // create initial connection
+        let params = connType
+        params.acceptLocalOnly = true
+        params.allowLocalEndpointReuse = true
+        
         self.conn = NWConnection(host: host, port: port, using: connType)
         
         // start connection

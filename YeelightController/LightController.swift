@@ -78,28 +78,117 @@ public enum DiscoveryWait {
 
 
 // MARK: |<  class UDPConnection
-fileprivate class UDPConnection: Connection {
+fileprivate class UDPConnection {
+    
+    // connection
+    let dispatchGroup = DispatchGroup()
+    let serialQueue = DispatchQueue(label: "serialQueue")
+    let udpParams = NWParameters.udp
+    var listener: NWListener?
+    let targetHostPort = NWEndpoint.hostPort(host: "239.255.255.250", port: 1982)
+    var connection: NWConnection?
     
     // search message
-    private static let searchMsg: String = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1982\r\nMAN: \"ssdp:discover\"\r\nST: wifi_bulb"
-    private static let searchBytes = searchMsg.data(using: .utf8)
+    let searchMsg: Data = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1982\r\nMAN: \"ssdp:discover\"\r\nST: wifi_bulb".data(using: .utf8)!
     
-    
-    
-    // MARK: init
-    fileprivate init() {
-        let udpParams = NWParameters.udp
-        udpParams.acceptLocalOnly = true
+    let sendCompletion = NWConnection.SendCompletion.contentProcessed {
+        (error) in
+        if let error = error {
+            print("UDP Connection send error: \(error)")
+        }
         
-        super.init(host: "239.255.255.250", port: 1982,
-                   serialQueueLabel: "UDP Queue", connType: udpParams,
-                   receiveLoop: false)
-    } // UDPConnection.init()
+        print("search message sent")
+    }
     
     
-    // MARK: func listen
+    /*
+     Rebuild for OSX 10.15.5 and Xcode 11.5
+      - setup listener
+      - get listener port
+      - listener stateUpdateHandler
+      - start listener
+      - handle new connection
+      - save port to outside variable
+      - state ready
+      - udp connection
+      - send message
+      - close connection upon message sent
+     */
+    
+    
+    // MARK: getWiFiAddress
+    func getWiFiAddress() -> String? {
+        // source: https://stackoverflow.com/questions/30748480/swift-get-devices-wifi-ip-address
+        var address : String?
+        // Get list of all interfaces on the local machine:
+        var ifaddr : UnsafeMutablePointer<ifaddrs>?
+        guard getifaddrs(&ifaddr) == 0 else { return nil }
+        guard let firstAddr = ifaddr else { return nil }
+
+        // For each interface ...
+        for ifptr in sequence(first: firstAddr, next: { $0.pointee.ifa_next }) {
+            let interface = ifptr.pointee
+
+            // Check for IPv4 or IPv6 interface:
+            let addrFamily = interface.ifa_addr.pointee.sa_family
+            //if addrFamily == UInt8(AF_INET) || addrFamily == UInt8(AF_INET6) {  // **ipv6 committed
+            if addrFamily == UInt8(AF_INET){
+
+                // Check interface name:
+                let name = String(cString: interface.ifa_name)
+                if  name == "en0" {
+
+                    // Convert interface address to a human readable string:
+                    var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                    getnameinfo(interface.ifa_addr, socklen_t(interface.ifa_addr.pointee.sa_len),
+                                &hostname, socklen_t(hostname.count),
+                                nil, socklen_t(0), NI_NUMERICHOST)
+                    address = String(cString: hostname)
+                }
+            }
+        }
+        freeifaddrs(ifaddr)
+        
+        return address
+    }
+    
+    
+    // MARK: func connectAndSend
+    fileprivate func connectAndSend() {
+        
+        self.connection?.stateUpdateHandler = {
+            (state) in
+            switch state {
+            case .setup:
+                print("udp connection setup")
+            case .preparing:
+                print("udp connection preparing")
+            case .ready:
+                print("udp connection ready")
+                print("local endpoint: \(String(describing: self.connection?.currentPath?.localEndpoint))")
+                self.connection?.send(content: self.searchMsg, completion: self.sendCompletion)
+            case .cancelled:
+                print("udp connection cancelled")
+            case .waiting(let error):
+                print("udp connection waiting with error: \(error)")
+            case .failed(let error):
+                print("udp connection failed with error: \(error)")
+            @unknown default:
+                print("udp connection unknown error")
+            }
+        }
+        
+        self.connection?.start(queue: self.serialQueue)
+        
+    }
+    
+    
+    
+    // MARK: func search
     // Listen for reply from multicast
-    fileprivate func listen(on port: NWEndpoint.Port, wait mode: DiscoveryWait, _ closure: @escaping ([Data]) -> Void) throws {
+    fileprivate func search(wait mode: DiscoveryWait, _ closure: @escaping ([Data]) -> Void) throws {
+        
+        print("search function entered")
         
         let listenerGroup = DispatchGroup()
         var waitCount: Int = 0 // default lightCount
@@ -121,17 +210,57 @@ fileprivate class UDPConnection: Connection {
         }
         
         
-        // ensures that dispatchGroup.wait in calling function is released if the listener fails and throws an error.
-        defer {
-            self.dispatchGroup.leave() // unlock 2 (entered in self.sendSearchMessage)
-        }
         
-        let listener = try? NWListener(using: .udp, on: port)
+        
+        self.listener = try? NWListener(using: .udp)
+        
         
         // Holds all the data received
         var dataArray: [Data] = []
         
-        listener?.newConnectionHandler = { (udpNewConn) in
+        
+        self.listener?.stateUpdateHandler = {
+            (state) in
+            switch state {
+            case .setup:
+                print("listener setting up")
+            case .waiting(let error):
+                print("udp listener waiting with error: \(error)")
+            case .ready:
+                print("udp listener ready")
+                
+                let localHostString = self.getWiFiAddress()
+                let listenerPort = self.listener?.port
+                
+                if let localHostString = localHostString, let listenerPort = listenerPort {
+                    
+                    let localHost = NWEndpoint.Host(localHostString)
+                    self.udpParams.requiredLocalEndpoint =
+                        .hostPort(host: localHost, port: listenerPort)
+                    self.udpParams.acceptLocalOnly = true
+                    self.udpParams.allowLocalEndpointReuse = true
+                    
+                    self.connection = NWConnection(to: self.targetHostPort, using: self.udpParams)
+                    
+                    self.connectAndSend()
+                    
+                }
+                
+                
+                
+            case .cancelled:
+                print("udp listener cancelled")
+            case .failed(let error):
+                print("udp listener failed with error: \(error)")
+                
+            @unknown default:
+                print("unknown error")
+            }
+        }
+        
+        
+        listener?.newConnectionHandler = {
+            (udpNewConn) in
             // create connection, listen to reply and save data
             udpNewConn.start(queue: self.serialQueue)
             
@@ -157,7 +286,7 @@ fileprivate class UDPConnection: Connection {
         } // newConnectionHandler
         
         // start the search
-        listener?.start(queue: self.serialQueue)
+        self.listener?.start(queue: self.serialQueue)
         
         // wait for light count, or timeout if not all expected lights found or set to search for a set amount of time
         if listenerGroup.wait(timeout: futureTime) == .success {
@@ -170,55 +299,11 @@ fileprivate class UDPConnection: Connection {
         
         // pass data to the closure, cancel the listener and signal that the calling function can progress with the data
         closure(dataArray)
-        listener?.cancel()
+        self.listener?.cancel()
     } // UDPConnection.listener()
     
     
     
-    // MARK: func sendSearchMessage
-    fileprivate func sendSearchMessage(wait mode: DiscoveryWait, _ closure:@escaping ([Data]) -> Void) throws {
-        
-        // 1 second to ready the connection
-        let connPrepTimeout = DispatchTime(uptimeNanoseconds: DispatchTime.now().uptimeNanoseconds + 1 * 1_000_000_000)
-        
-        self.dispatchGroup.enter() // lock 1
-        // wait for self.conn to be in ready state
-        
-        self.statusReady = {
-            self.dispatchGroup.leave()
-        }
-        
-        // wait lock 1
-        // waiting for connection state to be .ready
-        if self.dispatchGroup.wait(timeout: connPrepTimeout) == .timedOut {
-            throw DiscoveryError.lightSearchTimedOut
-        } // wait lock 1 (with timeout)
-        
-        // send a search message
-        self.conn.send(content: UDPConnection.searchBytes, completion: self.sendCompletion)
-        
-        // safely unwrap local port
-        guard let localHostPort = self.getHostPort(endpoint: .local) else {
-            print("Couldn't find local port")
-            return
-        }
-        
-        self.dispatchGroup.enter() // lock 2
-        // Listen for light replies and create a new light tcp connection
-        
-        defer {
-            self.conn.cancel()
-        }
-        
-        try self.listen(on: localHostPort.1, wait: mode) {
-            (dataArray) in
-            closure(dataArray)
-        }
-        
-        // wait for UDPConnection.listener() to collect data
-        self.dispatchGroup.wait() // wait lock 2 - unlock in listener() - also with timeout
-        
-    } // UDPConnection.sendSearchMessage()
     
     
 } // class UDPConnection
@@ -415,7 +500,7 @@ public class LightController {
         
         // establish
         do {
-            try udp?.sendSearchMessage(wait: mode) {
+            try udp?.search(wait: mode) {
                 (dataArray) in
                 
                 for i in dataArray {
