@@ -165,7 +165,6 @@ fileprivate class UDPConnection {
                 print("udp connection preparing")
             case .ready:
                 print("udp connection ready")
-                print("local endpoint: \(String(describing: self.connection?.currentPath?.localEndpoint))")
                 self.connection?.send(content: self.searchMsg, completion: self.sendCompletion)
             case .cancelled:
                 print("udp connection cancelled")
@@ -188,7 +187,6 @@ fileprivate class UDPConnection {
     // Listen for reply from multicast
     fileprivate func search(wait mode: DiscoveryWait, _ closure: @escaping ([Data]) -> Void) throws {
         
-        print("search function entered")
         
         let listenerGroup = DispatchGroup()
         var waitCount: Int = 0 // default lightCount
@@ -223,7 +221,7 @@ fileprivate class UDPConnection {
             (state) in
             switch state {
             case .setup:
-                print("listener setting up")
+                print("udp listener setting up")
             case .waiting(let error):
                 print("udp listener waiting with error: \(error)")
             case .ready:
